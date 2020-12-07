@@ -1,48 +1,53 @@
+// グローバル関数
+let kora; // 「こら」という声を発生するためのインスタンスを入れるための変数
+let isStandingUp = false; // 立ち上がっているかどうかの判定のための変数
 
-let video;
-let poseNet;
-let kora;
-let isStandingUp = false;
+// p5.js/p5.sound用の関数
+function preload() {
+  soundFormats('mp3');
+  kora = loadSound('assets/kora');
+}
 
+// p5.js用の関数
+function setup() {
+  createCanvas(0);
+  const video = createCapture(VIDEO);
+  // ml5のPoseNetモデルを読み込むための記述
+  const poseNet = ml5.poseNet(video, modelLoaded);
+  // ml5が人間のポーズを感知したときのリスナー
+  poseNet.on('pose', gotPoses);
+}
+
+// ml5の機械学習モデルが読み込まれたときに呼ばれるコールバック関数
 function modelLoaded() {
-  console.log('Model Loaded!');
+  const message = document.querySelector('#message');
+  message.innerHTML = '準備OKだよ！';
 }
 
-function setIsStandingUpFalse() {
-  if (isStandingUp) {
-    isStandingUp = false;
-  }
-}
-
-function setIsStandingUpTrue() {
-  if (!isStandingUp) {
-    isStandingUp = true;
-    kora.play();
-  }
-}
-
+// 人間のポーズを感知したときに発火される関数
 function gotPoses(poses) {
   if (poses && poses[0]) {
     const pose = poses[0].pose;
     const noseY = pose.nose.y;
     if (noseY < 50) {
-      setIsStandingUpTrue();
+      onStandingUp();
     } else {
-      setIsStandingUpFalse();
+      onSitting();
     }
-  } else {
-    setIsStandingUpTrue();
   }
 }
 
-function preload() {
-  soundFormats('mp3', 'ogg');
-  kora = loadSound('assets/kora');
+// 座っている時に呼ばれる関数
+function onSitting() {
+  if (isStandingUp) {
+    isStandingUp = false;
+  }
 }
 
-function setup() {
-  createCanvas(640, 480);
-  video = createCapture(VIDEO);
-  poseNet = ml5.poseNet(video, modelLoaded);
-  poseNet.on('pose', gotPoses);
+// 立ち上がろうとしている時に呼ばれる関数
+function onStandingUp() {
+  if (!isStandingUp) {
+    isStandingUp = true;
+    kora.play();
+  }
 }
